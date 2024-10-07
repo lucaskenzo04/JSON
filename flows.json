@@ -1,0 +1,115 @@
+[
+    {
+        "id": "c3a55889c631b1cc",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "5c649fd6c23aa2d7",
+        "type": "http in",
+        "z": "c3a55889c631b1cc",
+        "name": "",
+        "url": "/chatfuel",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 270,
+        "y": 440,
+        "wires": [
+            [
+                "01c32389535c8743"
+            ]
+        ]
+    },
+    {
+        "id": "f4f33741f2d04be9",
+        "type": "function",
+        "z": "c3a55889c631b1cc",
+        "name": "Parse JSON do Watson Assistant",
+        "func": "if (msg.payload) {\n    let output = msg.payload.output.generic;\n    msg.payload = { messages: [] };\n    for (var i = 0; i < output.length; i++) {\n        if (output[i].response_type === \"text\") {\n            msg.payload.messages.push({ text: output[i].text });    \n        } else if (output[i].response_type === \"image\") {\n            msg.payload.messages.push({ attachment: { type: \"image\", payload: { url: output[i].source }}})\n        } else if (output[i].response_type === \"option\") {\n            var buttons = [];\n            for (var b = 0; b < output[i].options.length; b++) {\n                buttons.push({ type: \"show_block\", block_names: [\"Options\"], title: output[i].options[b].label });\n            }\n            msg.payload.messages.push({ attachment: { type: \"template\", payload: { template_type: \"button\", text: output[i].title, buttons: buttons }}});\n        } else {\n            msg.payload.messages.push({ text: \"Erro no retorno da API\" })\n        }\n    }\n}\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 600,
+        "wires": [
+            [
+                "4be01454643a34df"
+            ]
+        ]
+    },
+    {
+        "id": "01c32389535c8743",
+        "type": "change",
+        "z": "c3a55889c631b1cc",
+        "name": "Mensagem do payload",
+        "rules": [
+            {
+                "t": "set",
+                "p": "params.session_id",
+                "pt": "msg",
+                "to": "req.query.user",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "req.query.text",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 480,
+        "y": 440,
+        "wires": [
+            [
+                "2842df0351232693"
+            ]
+        ]
+    },
+    {
+        "id": "2842df0351232693",
+        "type": "watson-assistant-v2",
+        "z": "c3a55889c631b1cc",
+        "name": "Watson",
+        "service-endpoint": "",
+        "assistant_id": "2d8fd409-ce30-4a00-a2e1-a5e9f9f0b54f",
+        "debug": false,
+        "restart": false,
+        "return_context": true,
+        "alternate_intents": false,
+        "multisession": true,
+        "timeout": "",
+        "optout-learning": false,
+        "persist-session-id": false,
+        "x": 680,
+        "y": 440,
+        "wires": [
+            [
+                "f4f33741f2d04be9"
+            ]
+        ]
+    },
+    {
+        "id": "4be01454643a34df",
+        "type": "http response",
+        "z": "c3a55889c631b1cc",
+        "name": "Retorno HTTP",
+        "statusCode": "",
+        "headers": {},
+        "x": 760,
+        "y": 600,
+        "wires": []
+    }
+]
